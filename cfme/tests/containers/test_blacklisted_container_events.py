@@ -78,6 +78,12 @@ def restore_advanced_settings(appliance):
         appliance.update_advanced_settings(
             {"ems": {"ems_openshift": {"blacklisted_event_names": "<<reset>>"}}}
         )
+        appliance.update_advanced_settings(
+            {"ems_refresh": {"kubernetes": {"chunk_size": "<<reset>>"}}}
+        )
+        appliance.update_advanced_settings(
+            {"ems_refresh": {"openshift": {"chunk_size": "<<reset>>"}}}
+        )
 
 
 def create_pod(provider, namespace):
@@ -132,7 +138,8 @@ def get_blacklisted_event_names(appliance):
     return rails_result.output
 
 
-def test_blacklisted_container_events(request, appliance, provider, app_creds):
+@pytest.mark.parametrize('chunk_size', [1000, 500, 100, 50, 10])
+def test_blacklisted_container_events(request, appliance, provider, app_creds, chunk_size):
     """
         Test that verifies that container events can be blacklisted.
 
@@ -142,6 +149,13 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
             casecomponent: Containers
             initialEstimate: 1/6h
     """
+
+    appliance.update_advanced_settings(
+        {"ems_refresh": {"kubernetes": {"chunk_size": chunk_size}}}
+    )
+    appliance.update_advanced_settings(
+        {"ems_refresh": {"openshift": {"chunk_size": chunk_size}}}
+    )
 
     project_name = fauxfactory.gen_alpha(8).lower()
 
